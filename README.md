@@ -108,21 +108,15 @@ Las tarjetas en verde indican que el precio actual está por debajo del objetivo
 
 ---
 
-## 🔭 Proyección y próximos pasos
+## Proyección y próximos pasos
 
 El proyecto está en fase funcional pero tiene margen de evolución en varias direcciones:
 
 **Más tiendas**
-Añadir soporte para Zacatrus, Philibert, El Dragón Azul u otras tiendas de referencia en España y Europa. Cada tienda nueva requiere identificar el selector CSS del precio, lo que suele llevar menos de 30 minutos.
+Añadir soporte para Zacatrus, Amazon u otras tiendas de referencia en España y Europa. Cada tienda nueva requiere identificar el selector CSS del precio, lo que suele llevar menos de 30 minutos.
 
-**Historial de precios**
-Guardar el precio cada vez que se escanea y mostrar una gráfica de evolución por producto. Permitiría detectar tendencias y confirmar si un precio "en oferta" es realmente una ganga o simplemente el precio habitual.
-
-**Notificaciones**
-Un sistema de alertas por email o Telegram cuando un producto alcanza el precio objetivo, sin necesidad de abrir la aplicación manualmente.
-
-**Despliegue en servidor**
-Mover el backend a un servidor en la nube (Railway, Render, Fly.io) y programar escaneos automáticos periódicos, eliminando la necesidad de tener el ordenador encendido.
+**Añadir un track de precios historicos
+Añadr un track de precios historicos para obtener feedback de los minimos y maximos historicos y poder acotar mejor los precios objetivos personales.
 
 **Integración con BGG**
 Cruzar los datos de precios con la base de datos de BoardGameGeek para mostrar la valoración de la comunidad junto al precio, ayudando a decidir si un juego barato merece la pena.
