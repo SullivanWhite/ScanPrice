@@ -66,7 +66,7 @@ Navegador (index.html)
 |---|---|---|
 | [GoblinTrader](https://goblintrader.es) | `span.price` | Operativo |
 | [Dungeon Marvels](https://dungeonmarvels.com) | `span[itemprop="price"][content]` | Operativo |
-| [Mathom](https://mathom.es) | `span.current-price-value[content]` | ✅Operativo |
+| [Mathom](https://mathom.es) | `span.current-price-value[content]` | Operativo |
 
 ### Decisiones técnicas relevantes
 
