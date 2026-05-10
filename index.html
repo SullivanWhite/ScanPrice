@@ -65,10 +65,95 @@
   .header-stats b { color: var(--text); }
 
   /* ── LAYOUT ── */
-  .container {
-    max-width: 1100px;
+  .page-wrapper {
+    max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .container {
+    min-width: 0;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: sticky;
+    top: 74px;
+  }
+  .sidebar-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .sidebar-header span { color: var(--text3); font-weight: 400; }
+  .sidebar-list {
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg4) transparent;
+  }
+  .sidebar-item {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+    cursor: default;
+  }
+  .sidebar-item:last-child { border-bottom: none; }
+  .sidebar-item:hover { background: var(--bg3); }
+  .sidebar-item-name {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sidebar-item-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sidebar-item-precio {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .sidebar-item-fecha {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+  .sidebar-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 2;
+  }
+  @media (max-width: 900px) {
+    .page-wrapper { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .sidebar-list { max-height: 300px; }
   }
 
   /* ── ADD FORM ── */
@@ -345,6 +430,23 @@
     color: var(--red);
     font-family: var(--mono);
   }
+  .card-minimo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .card-minimo .min-val {
+    color: #5b9bd5;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .card-minimo .min-label { letter-spacing: 0.06em; }
   .scanning-overlay {
     position: absolute;
     inset: 0;
@@ -425,6 +527,7 @@
   </div>
 </header>
 
+<div class="page-wrapper">
 <div class="container">
 
   <!-- AÑADIR PRODUCTO -->
@@ -479,7 +582,21 @@
   </div>
 
   <div class="statusbar" id="statusbar">Listo.</div>
-</div>
+</div><!-- /.container -->
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-panel">
+    <div class="sidebar-header">
+      // últimos añadidos <span id="sidebar-count"></span>
+    </div>
+    <div class="sidebar-list" id="sidebar-list">
+      <div class="sidebar-empty">Cargando...</div>
+    </div>
+  </div>
+</aside>
+
+</div><!-- /.page-wrapper -->
 
 <div id="toast"></div>
 
@@ -504,7 +621,7 @@ function tiendaClass(tienda) {
   return 'tienda-otra';
 }
 
-function renderCard(p, idx, scanning=false) {
+function renderCard(p, idx, scanning=false, stats=null) {
   const tieneActual = p.precio_actual != null;
   const esGanga = tieneActual && p.precio_actual <= p.precio_objetivo;
   const diff = tieneActual ? (p.precio_actual - p.precio_objetivo).toFixed(2) : null;
@@ -540,6 +657,16 @@ function renderCard(p, idx, scanning=false) {
         <div class="card-tienda ${tiendaClass(p.tienda)}">${p.tienda || '—'}</div>
         <div class="card-name">${p.nombre}</div>
         ${priceHtml}
+        ${stats && stats.n > 1 ? `
+        <div class="card-minimo">
+          <span class="min-label">mín. histórico</span>
+          <span class="min-val">${stats.min.toFixed(2)} €</span>
+          <span style="margin-left:auto;color:var(--text3)">${stats.n} registros</span>
+        </div>` : stats && stats.n === 1 ? `
+        <div class="card-minimo">
+          <span class="min-label">1er registro</span>
+          <span class="min-val">${stats.min.toFixed(2)} €</span>
+        </div>` : ''}
         <div class="card-footer">
           <a class="btn-link" href="${p.url}" target="_blank">↗ ver tienda</a>
           <button class="btn-del" onclick="deleteProducto(${idx})" title="Eliminar">✕</button>
@@ -549,13 +676,21 @@ function renderCard(p, idx, scanning=false) {
     </div>`;
 }
 
-function renderGrid() {
+async function renderGrid() {
   const grid = document.getElementById('grid');
   if (!productos.length) {
     grid.innerHTML = `<div class="empty"><div class="big">🎲</div><div>No hay productos en la lista.</div><div>Pega una URL arriba y empieza a cazar gangas.</div></div>`;
     return;
   }
-  grid.innerHTML = productos.map((p, i) => renderCard(p, i)).join('');
+  // Cargar historial de todos los productos en paralelo
+  const historialesRaw = await Promise.all(
+    productos.map(p =>
+      fetch(`${API}/historial/${encodeURIComponent(p.nombre)}`)
+        .then(r => r.json())
+        .catch(() => ({ stats: null }))
+    )
+  );
+  grid.innerHTML = productos.map((p, i) => renderCard(p, i, false, historialesRaw[i].stats)).join('');
   updateStats();
 }
 
@@ -648,6 +783,7 @@ async function addProducto() {
       document.getElementById('inp-precio').value = '';
       document.getElementById('preview').className = 'preview-chip';
       await cargarProductos();
+cargarSidebar();
     } else {
       toast('⚠ ' + (data.error || 'Error al guardar'));
     }
@@ -706,6 +842,39 @@ document.getElementById('inp-url').addEventListener('keydown', e => {
 });
 
 cargarProductos();
+cargarSidebar();
+
+async function cargarSidebar() {
+  try {
+    const r = await fetch(`${API}/ultimos-anyadidos`);
+    const data = await r.json();
+    const lista = document.getElementById('sidebar-list');
+    const count = document.getElementById('sidebar-count');
+
+    if (!data.length) {
+      lista.innerHTML = '<div class="sidebar-empty">La base de datos<br>está vacía.</div>';
+      return;
+    }
+
+    count.textContent = `(${data.length})`;
+    lista.innerHTML = data.map(item => {
+      const fecha = new Date(item.fecha).toLocaleDateString('es-ES', {
+        day: '2-digit', month: '2-digit', year: '2-digit'
+      });
+      return `
+        <div class="sidebar-item" title="${item.nombre}">
+          <div class="sidebar-item-name">${item.nombre}</div>
+          <div class="sidebar-item-meta">
+            <span class="sidebar-item-precio">${item.precio.toFixed(2)} €</span>
+            <span class="sidebar-item-fecha">${fecha}</span>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('sidebar-list').innerHTML =
+      '<div class="sidebar-empty">Sin conexión<br>con el servidor.</div>';
+  }
+}
 </script>
 </body>
 </html>
